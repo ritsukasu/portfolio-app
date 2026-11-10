@@ -1,24 +1,10 @@
-// =====================================================================
-// Exercise 8: the REFERENCED version of the portfolio app
-//
-// Embedded (main app):    project = { category: 'Web', ... }
-// Referenced (this app):  project = { categoryId: 3, ... }
-//                         category = { id: 3, name: 'Web', color, description }
-//
-// Reading a project now takes two reads (project, then its category), but
-// renaming a category means updating ONE document instead of every project.
-// =====================================================================
-
-// A different database name, so this app never clashes with PortfolioDB
-// when both are opened from the same address.
 const db = new Dexie('PortfolioRefDB');
 
 db.version(1).stores({
-  projects: '++id, categoryId, createdAt',   // categoryId is the reference
-  categories: '++id, &name'                  // &name = names must be unique
+  projects: '++id, categoryId, createdAt',
+  categories: '++id, &name'
 });
 
-// Created the first time the app runs, then managed on screen
 const DEFAULT_CATEGORIES = [
   { name: 'Web', color: '#38bdf8', description: 'Websites and web apps' },
   { name: 'Systems', color: '#a78bfa', description: 'Back-end and system projects' },
@@ -26,9 +12,6 @@ const DEFAULT_CATEGORIES = [
   { name: 'Automation', color: '#4ade80', description: 'Scripts and workflows' }
 ];
 
-// ---------------------------------------------------------------------
-// Page elements
-// ---------------------------------------------------------------------
 
 const form = document.querySelector('#project-form');
 const formTitle = document.querySelector('#form-title');
@@ -51,7 +34,6 @@ const importBtn = document.querySelector('#import-btn');
 const importFile = document.querySelector('#import-file');
 const clearBtn = document.querySelector('#clear-btn');
 
-// The new categories screen
 const catForm = document.querySelector('#category-form');
 const catFormTitle = document.querySelector('#cat-form-title');
 const catIdInput = document.querySelector('#category-id');
@@ -62,11 +44,8 @@ const catCancelBtn = document.querySelector('#cat-cancel-btn');
 const catMessage = document.querySelector('#category-message');
 const catListEl = document.querySelector('#category-list');
 
-let activeCategory = 'All';      // 'All' or a category id (a number)
+let activeCategory = 'All';
 
-// ---------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------
 
 function escapeHTML(value = '') {
   return String(value)
@@ -79,9 +58,6 @@ function escapeHTML(value = '') {
 const isHttp = (url) => /^https?:\/\//i.test(url || '');
 const isHexColor = (value) => /^#[0-9a-f]{6}$/i.test(value || '');
 
-// One read of the whole categories collection, as a Map: id -> category.
-// This is the "second read" of a referenced design, done once per render
-// instead of once per project.
 async function getCategoryMap() {
   const all = await db.categories.toArray();
   return new Map(all.map((c) => [c.id, c]));
@@ -93,9 +69,6 @@ async function seedCategories() {
   }
 }
 
-// ---------------------------------------------------------------------
-// Categories: Create, Read, Update, Delete
-// ---------------------------------------------------------------------
 
 function showCategoryMessage(text = '') {
   catMessage.textContent = text;
@@ -140,13 +113,12 @@ async function renderCategoryList() {
   `).join('');
 }
 
-// Rebuild the category <select> in the project form from the database
 async function fillCategoryOptions() {
   const keep = categoryInput.value;
   const categories = await db.categories.orderBy('name').toArray();
-  categoryInput.length = 1;                         // keep the "Choose..." option
+  categoryInput.length = 1;
   categories.forEach((c) => categoryInput.add(new Option(c.name, c.id)));
-  categoryInput.value = keep;                       // stay on the same choice
+  categoryInput.value = keep;
 }
 
 catForm.addEventListener('submit', async (event) => {
@@ -164,12 +136,11 @@ catForm.addEventListener('submit', async (event) => {
   const id = Number(catIdInput.value);
   try {
     if (id) {
-      await db.categories.update(id, data);         // rename = ONE document changes
+      await db.categories.update(id, data);
     } else {
       await db.categories.add(data);
     }
   } catch (error) {
-    // &name in the schema makes duplicate names fail with a ConstraintError
     if (error.name === 'ConstraintError') {
       showCategoryMessage(`A category named "${data.name}" already exists.`);
       return;
@@ -191,7 +162,6 @@ catListEl.addEventListener('click', async (event) => {
     return;
   }
 
-  // Delete: references are NOT checked by the database, so we check them here
   const used = await db.projects.where('categoryId').equals(id).count();
   if (used > 0) {
     showCategoryMessage(`${used} project(s) still use this category. Move or delete them first.`);
@@ -208,14 +178,11 @@ catListEl.addEventListener('click', async (event) => {
 
 catCancelBtn.addEventListener('click', resetCategoryForm);
 
-// ---------------------------------------------------------------------
-// Projects: Create
-// ---------------------------------------------------------------------
 
 function readForm() {
   return {
     title: titleInput.value.trim(),
-    categoryId: Number(categoryInput.value),         // a reference, not a name
+    categoryId: Number(categoryInput.value),
     year: yearInput.value ? Number(yearInput.value) : null,
     description: descriptionInput.value.trim(),
     tags: tagsInput.value.split(',').map((t) => t.trim()).filter(Boolean),
@@ -229,9 +196,6 @@ async function createProject(data) {
   return db.projects.add({ ...data, createdAt: Date.now() });
 }
 
-// ---------------------------------------------------------------------
-// Projects: Read
-// ---------------------------------------------------------------------
 
 async function getProjects() {
   const text = searchInput.value.trim().toLowerCase();
@@ -288,7 +252,6 @@ async function render() {
   }
 
   listEl.innerHTML = projects.map((p) => {
-    // The "join": look the category up by the id stored in the project
     const category = categoryMap.get(p.categoryId);
     const color = category && isHexColor(category.color) ? category.color : '#94a3b8';
 
@@ -314,9 +277,6 @@ async function render() {
   }).join('');
 }
 
-// ---------------------------------------------------------------------
-// Projects: Update, Delete, Clear
-// ---------------------------------------------------------------------
 
 async function updateProject(id, changes) {
   return db.projects.update(id, changes);
@@ -348,17 +308,10 @@ async function deleteProject(id) {
   return db.projects.delete(id);
 }
 
-// Clears projects only. Categories are shared data and stay.
 async function clearAllProjects() {
   return db.projects.clear();
 }
 
-// ---------------------------------------------------------------------
-// Export / Import
-// Ids differ between databases, so the file stores the category NAME
-// (the same shape the embedded app exports) and import looks it up,
-// creating the category if it does not exist yet.
-// ---------------------------------------------------------------------
 
 async function exportProjects() {
   const categoryMap = await getCategoryMap();
@@ -385,7 +338,6 @@ async function importProjects(data) {
 
   const items = data.filter((d) => d && typeof d.title === 'string' && d.title.trim());
 
-  // One transaction: either everything is imported or nothing is
   await db.transaction('rw', db.categories, db.projects, async () => {
     const names = [...new Set(items.map((d) => String(d.category || 'Uncategorized').trim()))];
     for (const name of names) {
@@ -407,9 +359,6 @@ async function importProjects(data) {
   return { added: items.length, skipped: data.length - items.length };
 }
 
-// ---------------------------------------------------------------------
-// Wire up the page
-// ---------------------------------------------------------------------
 
 async function refreshAll() {
   await fillCategoryOptions();
@@ -482,7 +431,6 @@ importFile.addEventListener('change', async () => {
   await refreshAll();
 });
 
-// Start the app
 (async () => {
   await seedCategories();
   await refreshAll();
