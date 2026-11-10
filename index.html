@@ -4,17 +4,38 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>My Portfolio Manager (referenced categories)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<header>
-  <h1>My Portfolio</h1>
-  <p>Add, edit and organize your work by category.</p>
+<div id="loader" aria-hidden="true"><span>Loading</span><i></i></div>
+
+<header class="hero">
+  <img class="hero-bg" src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=80" alt="" onerror="this.remove()" />
+  <div class="hero-shade"></div>
+  <div class="hero-inner">
+    <span class="eyebrow reveal">&#9702; Portfolio manager</span>
+    <h1 class="reveal">My Portfolio</h1>
+    <p class="reveal">Add, edit and organize your work by category.</p>
+  </div>
+  <div class="strip" aria-hidden="true">
+    <div class="strip-track">
+      <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=70" alt="" onerror="this.style.visibility='hidden'" />
+    </div>
+  </div>
 </header>
 
 <main>
-  <div class="column">
-    <section class="card">
+  <section class="card reveal">
       <h2 id="form-title">Add a project</h2>
       <form id="project-form">
         <input type="hidden" id="project-id" />
@@ -59,10 +80,10 @@
           <button type="button" id="cancel-btn" hidden>Cancel</button>
         </div>
       </form>
-    </section>
+  </section>
 
-    <!-- The new screen: add, rename and delete categories -->
-    <section class="card" id="categories-card">
+  <!-- Categories now sits between the project form and the search box -->
+  <section class="card reveal" id="categories-card">
       <h2 id="cat-form-title">Add a category</h2>
       <form id="category-form">
         <input type="hidden" id="category-id" />
@@ -87,10 +108,9 @@
       </form>
 
       <ul id="category-list" class="category-list"></ul>
-    </section>
-  </div>
+  </section>
 
-  <section class="card">
+  <section class="card reveal">
     <div class="toolbar">
       <input type="search" id="search" placeholder="Search title or tags..." />
     </div>
@@ -110,5 +130,6 @@
 
 <script src="https://unpkg.com/dexie@4/dist/dexie.js"></script>
 <script src="app.js"></script>
+<script src="anim.js"></script>
 </body>
 </html>
